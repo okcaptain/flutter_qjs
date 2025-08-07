@@ -250,9 +250,9 @@ void jsFreeRuntime(
   final referenceleak = <String>[];
   final opaque = runtimeOpaques[rt];
   if (opaque != null) {
-    while (true) {
-      final ref = opaque._ref.firstWhereOrNull((ref) => ref is JSRefLeakable);
-      if (ref == null) break;
+    //https://github.com/abner/flutter_js/pull/173
+    while (opaque._ref.isNotEmpty) {
+      final ref = opaque._ref.first;
       ref.destroy();
       runtimeOpaques[rt]?._ref.remove(ref);
     }
