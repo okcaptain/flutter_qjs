@@ -87,6 +87,7 @@ class _TestPageState extends State<TestPage> {
                       onPressed: () async {
                         if (engine == null) return;
                         await engine?.close();
+                        engine = null;
                       }),
                 ],
               ),
