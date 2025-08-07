@@ -149,9 +149,9 @@ final Pointer<JSValue> Function() jsUNDEFINED = _qjsLib
     .asFunction();
 
 typedef _JSChannel = Pointer<JSValue> Function(
-    Pointer<JSContext> ctx, int method, Pointer<JSValue> argv);
+    Pointer<JSContext> ctx, int type, Pointer<JSValue> argv);
 typedef _JSChannelNative = Pointer<JSValue> Function(
-    Pointer<JSContext> ctx, IntPtr method, Pointer<JSValue> argv);
+    Pointer<JSContext> ctx, Size type, Pointer<JSValue> argv);
 
 /// JSRuntime *jsNewRuntime(JSChannel channel)
 final Pointer<JSRuntime> Function(
