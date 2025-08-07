@@ -17,18 +17,13 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'flutter_qjs',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        appBarTheme: AppBarTheme(brightness: Brightness.dark, elevation: 0),
-        backgroundColor: Colors.grey[300],
-        primaryColorBrightness: Brightness.dark,
-      ),
       routes: {
         'home': (BuildContext context) => TestPage(),
       },
@@ -43,8 +38,8 @@ class TestPage extends StatefulWidget {
 }
 
 class _TestPageState extends State<TestPage> {
-  String resp;
-  IsolateQjs engine;
+  String? resp;
+  IsolateQjs? engine;
 
   CodeInputController _controller = CodeInputController(
       text: 'import("hello").then(({default: greet}) => greet("world"));');
@@ -79,7 +74,7 @@ class _TestPageState extends State<TestPage> {
                       onPressed: () async {
                         await _ensureEngine();
                         try {
-                          resp = (await engine.evaluate(_controller.text ?? '',
+                          resp = (await engine?.evaluate(_controller.text ?? '',
                                   name: "<eval>"))
                               .toString();
                         } catch (e) {
@@ -91,8 +86,7 @@ class _TestPageState extends State<TestPage> {
                       child: Text("reset engine"),
                       onPressed: () async {
                         if (engine == null) return;
-                        await engine.close();
-                        engine = null;
+                        await engine?.close();
                       }),
                 ],
               ),
