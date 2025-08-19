@@ -173,7 +173,7 @@ class IsolateQjs {
   /// Max stack size for quickjs.
   final int? stackSize;
 
-  /// Max stack size for quickjs.
+  /// Timeout for JS_SetInterruptHandler.
   final int? timeout;
 
   /// Max memory for quickjs.
