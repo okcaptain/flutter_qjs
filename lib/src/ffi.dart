@@ -237,6 +237,8 @@ Uint8List compileJs(
   intPtrLen.value = 0;
   final rt = _compileJs(ctx, sourceCode.toNativeUtf8(), fileName.toNativeUtf8(), isModule ? 1 : 0, intPtrLen);
   Uint8List bytes = Uint8List.fromList(rt.asTypedList(intPtrLen.value));
+  malloc.free(rt);
+  malloc.free(intPtrLen);
   return bytes;
 }
 
