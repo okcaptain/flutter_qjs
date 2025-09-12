@@ -71,10 +71,11 @@ class JSEvalFlag {
 }
 
 class JSChannelType {
-  static const METHON = 0;
+  static const METHOD = 0;
   static const MODULE = 1;
   static const PROMISE_TRACK = 2;
   static const FREE_OBJECT = 3;
+  static const MODULE_NORMALIZE = 4;
 }
 
 class JSProp {

@@ -117,6 +117,23 @@ void _runJsIsolate(Map spawnMessage) async {
         #reason: _encodeData(reason),
       });
     },
+    moduleNormalize: (moduleBaseName, moduleName) {
+      final ptr = calloc<Pointer<Utf8>>();
+      ptr.value = Pointer.fromAddress(ptr.address);
+      sendPort.send({
+        #type: #moduleNormalize,
+        #moduleBaseName: moduleBaseName,
+        #moduleName: moduleName,
+        #ptr: ptr.address,
+      });
+      while (ptr.value.address == ptr.address) sleep(Duration(microseconds: 1));
+      final ret = ptr.value;
+      malloc.free(ptr);
+      if (ret.address == -1) throw JSError('moduleNormalize Not found');
+      final retString = ret.toDartString();
+      malloc.free(ret);
+      return retString;
+    },
     moduleHandler: (name) {
       final ptr = calloc<Pointer<Utf8>>();
       ptr.value = Pointer.fromAddress(ptr.address);
@@ -165,6 +182,7 @@ void _runJsIsolate(Map spawnMessage) async {
   await qjs.dispatch();
 }
 
+typedef _JsAsyncModuleNormalize = Future<String> Function(String moduleBaseName, String moduleName);
 typedef _JsAsyncModuleHandler = Future<String> Function(String name);
 
 class IsolateQjs {
@@ -179,6 +197,9 @@ class IsolateQjs {
   /// Max memory for quickjs.
   final int? memoryLimit;
 
+  /// module filename normalizer
+  final _JsAsyncModuleNormalize? moduleNormalize;
+
   /// Asynchronously handler to manage js module.
   final _JsAsyncModuleHandler? moduleHandler;
 
@@ -190,6 +211,7 @@ class IsolateQjs {
   /// Pass handlers to implement js-dart interaction and resolving modules. The `methodHandler` is
   /// used in isolate, so **the handler function must be a top-level function or a static method**.
   IsolateQjs({
+    this.moduleNormalize,
     this.moduleHandler,
     this.stackSize,
     this.timeout,
@@ -227,6 +249,15 @@ class IsolateQjs {
             }
           } catch (e) {
             print('host Promise Rejection Handler error: $e');
+          }
+          break;
+        case #moduleNormalize:
+          final ptr = Pointer<Pointer>.fromAddress(msg[#ptr]);
+          try {
+            String moduleName = await moduleNormalize!(msg[#moduleBaseName], msg[#moduleName]);
+            ptr.value = moduleName.toNativeUtf8();
+          } catch (e) {
+            ptr.value = Pointer.fromAddress(-1);
           }
           break;
         case #module:

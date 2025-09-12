@@ -9,10 +9,11 @@
 extern "C"
 {
   enum JSChannelType {
-    JSChannelType_METHON = 0,
+    JSChannelType_METHOD = 0,
     JSChannelType_MODULE = 1,
     JSChannelType_PROMISE_TRACK = 2,
     JSChannelType_FREE_OBJECT = 3,
+    JSChannelType_MODULE_NORMALIZE = 4,
   };
 
   typedef void *JSChannel(JSContext *ctx, size_t type, void *argv);

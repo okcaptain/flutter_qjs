@@ -7,6 +7,9 @@
  */
 part of '../flutter_qjs.dart';
 
+/// module filename normalizer
+typedef _JsModuleNormalize = String Function(String moduleBaseName, String moduleName);
+
 /// Handler function to manage js module.
 typedef _JsModuleHandler = String Function(String name);
 
@@ -30,6 +33,9 @@ class FlutterQjs {
   /// Message Port for event loop. Close it to stop dispatching event loop.
   ReceivePort port = ReceivePort();
 
+  /// module filename normalizer
+  final _JsModuleNormalize? moduleNormalize;
+
   /// Handler function to manage js module.
   final _JsModuleHandler? moduleHandler;
 
@@ -37,6 +43,7 @@ class FlutterQjs {
   final _JsHostPromiseRejectionHandler? hostPromiseRejectionHandler;
 
   FlutterQjs({
+    this.moduleNormalize,
     this.moduleHandler,
     this.stackSize,
     this.timeout,
@@ -49,7 +56,7 @@ class FlutterQjs {
     final rt = jsNewRuntime((ctx, type, ptr) {
       try {
         switch (type) {
-          case JSChannelType.METHON:
+          case JSChannelType.METHOD:
             final pdata = ptr.cast<Pointer<JSValue>>();
             final argc = pdata[1].cast<Int32>().value;
             final pargs = [];
@@ -71,14 +78,21 @@ class FlutterQjs {
                   pargs,
                   _jsToDart(ctx, pdata[0]),
                 ));
+          case JSChannelType.MODULE_NORMALIZE:
+            if (moduleNormalize == null) throw JSError('No moduleNormalize');
+            final pdata = ptr.cast<Pointer<Pointer<Utf8>>>();
+            final moduleBaseName = pdata[0].cast<Utf8>().toDartString();
+            final moduleName = pdata[1].cast<Utf8>().toDartString();
+            final ret = moduleNormalize!(
+              moduleBaseName,
+              moduleName,
+            ).toNativeUtf8();
+            return ret.cast();
           case JSChannelType.MODULE:
             if (moduleHandler == null) throw JSError('No ModuleHandler');
             final ret = moduleHandler!(
               ptr.cast<Utf8>().toDartString(),
             ).toNativeUtf8();
-            Future.microtask(() {
-              malloc.free(ret);
-            });
             return ret.cast();
           case JSChannelType.PROMISE_TRACK:
             final err = _parseJSException(ctx, ptr);

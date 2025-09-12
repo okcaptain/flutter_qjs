@@ -39,6 +39,17 @@ extern "C"
       int64_t start;
   };
 
+  char *js_module_normalize(JSContext *ctx,
+    const char *module_base_name,
+    const char *module_name, void *opaque) {
+
+    char *data[2];
+    data[0] = (char *)module_base_name;
+    data[1] = (char *)module_name;
+    char *str = (char *)((RuntimeOpaque *)opaque)->channel(ctx, JSChannelType_MODULE_NORMALIZE, data);
+    return str;
+  }
+
   JSModuleDef *js_module_loader(
       JSContext *ctx,
       const char *module_name, void *opaque)
@@ -64,7 +75,7 @@ extern "C"
     data[1] = &argc;
     data[2] = argv;
     data[3] = func_data;
-    return *(JSValue *)opaque->channel(ctx, JSChannelType_METHON, data);
+    return *(JSValue *)opaque->channel(ctx, JSChannelType_METHOD, data);
   }
 
   void js_promise_rejection_tracker(JSContext *ctx, JSValueConst promise,
@@ -91,7 +102,7 @@ extern "C"
     RuntimeOpaque *opaque = new RuntimeOpaque({channel, timeout, 0});
     JS_SetRuntimeOpaque(rt, opaque);
     JS_SetHostPromiseRejectionTracker(rt, js_promise_rejection_tracker, opaque);
-    JS_SetModuleLoaderFunc(rt, nullptr, js_module_loader, opaque);
+    JS_SetModuleLoaderFunc(rt, js_module_normalize, js_module_loader, opaque);
     JS_SetInterruptHandler(rt, js_interrupt_handler, opaque);
     return rt;
   }
