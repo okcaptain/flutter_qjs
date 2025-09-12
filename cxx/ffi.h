@@ -28,6 +28,8 @@ extern "C"
 
   DLLEXPORT JSRuntime *jsNewRuntime(JSChannel channel, int64_t timeout);
 
+  DLLEXPORT uint8_t *compileJs(JSContext *ctx, const char *source_code, const char *file_name, size_t is_module, size_t *length);
+
   DLLEXPORT uint32_t jsNewClass(JSContext *ctx, const char *name);
 
   DLLEXPORT void *jsGetObjectOpaque(JSValue *obj, uint32_t classid);

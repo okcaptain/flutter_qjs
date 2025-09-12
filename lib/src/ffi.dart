@@ -8,6 +8,7 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 
 extension ListFirstWhere<T> on Iterable<T> {
@@ -167,6 +168,24 @@ final Pointer<JSRuntime> Function(
     )>>('jsNewRuntime')
     .asFunction();
 
+final Pointer<Uint8> Function(
+    Pointer<JSContext> ctx,
+    Pointer<Utf8> sourceCode,
+    Pointer<Utf8> fileName,
+    int isModule,
+    Pointer<Int> length
+    ) _compileJs = _qjsLib
+    .lookup<
+    NativeFunction<
+        Pointer<Uint8> Function(
+            Pointer<JSContext> ctx,
+            Pointer<Utf8> sourceCode,
+            Pointer<Utf8> fileName,
+            Size isModule,
+            Pointer<Int> length
+            )>>('compileJs')
+    .asFunction();
+
 class _RuntimeOpaque {
   final _JSChannel _channel;
   List<JSRef> _ref = [];
@@ -206,6 +225,19 @@ Pointer<JSRuntime> jsNewRuntime(
   final rt = _jsNewRuntime(Pointer.fromFunction(channelDispacher), timeout);
   runtimeOpaques[rt] = _RuntimeOpaque(callback, port);
   return rt;
+}
+
+Uint8List compileJs(
+    Pointer<JSContext> ctx,
+    String sourceCode,
+    String fileName,
+    bool isModule,
+    ) {
+  Pointer<Int> intPtrLen = calloc<Int>();
+  intPtrLen.value = 0;
+  final rt = _compileJs(ctx, sourceCode.toNativeUtf8(), fileName.toNativeUtf8(), isModule ? 1 : 0, intPtrLen);
+  Uint8List bytes = Uint8List.fromList(rt.asTypedList(intPtrLen.value));
+  return bytes;
 }
 
 /// DLLEXPORT void jsSetMaxStackSize(JSRuntime *rt, size_t stack_size)

@@ -39,6 +39,22 @@ extern "C"
       int64_t start;
   };
 
+  uint8_t *compileJs(JSContext *ctx,
+        const char *source_code,
+        const char *file_name, size_t is_module, size_t *length) {
+      int eval_flags = JS_EVAL_FLAG_COMPILE_ONLY;
+      if (is_module) {
+        eval_flags = JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY;
+      }
+      JSValue compiled = JS_Eval(ctx, source_code, strlen(source_code), file_name, eval_flags);
+      if (JS_IsException(compiled)) {
+          return (uint8_t *)"";
+      }
+      uint8_t *buffer = JS_WriteObject(ctx, length, compiled, JS_WRITE_OBJ_BYTECODE | JS_WRITE_OBJ_REFERENCE);
+      JS_FreeValue(ctx, compiled);
+      return buffer;
+  }
+
   char *js_module_normalize(JSContext *ctx,
     const char *module_base_name,
     const char *module_name, void *opaque) {

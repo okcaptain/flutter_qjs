@@ -163,6 +163,13 @@ void _runJsIsolate(Map spawnMessage) async {
             evalFlags: msg[#flag],
           );
           break;
+        case #compile:
+          data = await qjs.compile(
+            msg[#source],
+            msg[#fileName],
+            msg[#isModule],
+          );
+          break;
         case #close:
           data = false;
           qjs.port.close();
@@ -315,6 +322,24 @@ class IsolateQjs {
     });
     final result = await evaluatePort.first;
     evaluatePort.close();
+    if (result is Map && result.containsKey(#error))
+      throw _decodeData(result[#error]);
+    return _decodeData(result);
+  }
+
+  Future<dynamic> compile(String source, String fileName, bool isModule) async {
+    _ensureEngine();
+    final port = ReceivePort();
+    final sendPort = await _sendPort!;
+    sendPort.send({
+      #type: #compile,
+      #source: source,
+      #fileName: fileName,
+      #isModule: isModule,
+      #port: port.sendPort,
+    });
+    final result = await port.first;
+    port.close();
     if (result is Map && result.containsKey(#error))
       throw _decodeData(result[#error]);
     return _decodeData(result);

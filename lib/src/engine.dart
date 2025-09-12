@@ -193,4 +193,10 @@ class FlutterQjs {
     jsFreeValue(ctx, jsval);
     return result;
   }
+
+  Uint8List compile(String source, String fileName, bool isModule) {
+    _ensureEngine();
+    final ctx = _ctx!;
+    return compileJs(ctx, source, fileName, isModule);
+  }
 }
