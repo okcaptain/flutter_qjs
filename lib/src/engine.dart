@@ -7,6 +7,12 @@
  */
 part of '../flutter_qjs.dart';
 
+/// module is bytecode
+typedef _JsModuleIsBytecode = int Function(String moduleName);
+
+/// module bytecode content
+typedef _JsModuleBytecode =  Uint8List Function(String moduleName);
+
 /// module filename normalizer
 typedef _JsModuleNormalize = String Function(String moduleBaseName, String moduleName);
 
@@ -33,6 +39,12 @@ class FlutterQjs {
   /// Message Port for event loop. Close it to stop dispatching event loop.
   ReceivePort port = ReceivePort();
 
+  /// module is bytecode
+  final _JsModuleIsBytecode? moduleIsBytecode;
+
+  /// module bytecode content
+  final _JsModuleBytecode? moduleBytecode;
+
   /// module filename normalizer
   final _JsModuleNormalize? moduleNormalize;
 
@@ -43,6 +55,8 @@ class FlutterQjs {
   final _JsHostPromiseRejectionHandler? hostPromiseRejectionHandler;
 
   FlutterQjs({
+    this.moduleIsBytecode,
+    this.moduleBytecode,
     this.moduleNormalize,
     this.moduleHandler,
     this.stackSize,
@@ -78,6 +92,20 @@ class FlutterQjs {
                   pargs,
                   _jsToDart(ctx, pdata[0]),
                 ));
+          case JSChannelType.MODULE_IS_BYTECODE:
+            if (moduleIsBytecode == null) throw JSError('No moduleIsBytecode');
+            final moduleName = ptr.cast<Utf8>().toDartString();
+            final ret = moduleIsBytecode!(
+              moduleName,
+            );
+            return _dartToJs(ctx, ret);
+          case JSChannelType.MODULE_BYTECODE:
+            if (moduleBytecode == null) throw JSError('No moduleBytecode');
+            final moduleName = ptr.cast<Utf8>().toDartString();
+            final ret = moduleBytecode!(
+              moduleName
+            );
+            return _dartToJs(ctx, ret);
           case JSChannelType.MODULE_NORMALIZE:
             if (moduleNormalize == null) throw JSError('No moduleNormalize');
             final pdata = ptr.cast<Pointer<Pointer<Utf8>>>();

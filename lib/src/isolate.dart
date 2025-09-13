@@ -117,6 +117,45 @@ void _runJsIsolate(Map spawnMessage) async {
         #reason: _encodeData(reason),
       });
     },
+    moduleIsBytecode: (moduleName) {
+      final ptr = calloc<Pointer<Int>>();
+      ptr.value = Pointer.fromAddress(ptr.address);
+      sendPort.send({
+        #type: #moduleIsBytecode,
+        #moduleName: moduleName,
+        #ptr: ptr.address,
+      });
+      while (ptr.value.address == ptr.address) sleep(Duration(microseconds: 1));
+      final ret = ptr.value;
+      malloc.free(ptr);
+      if (ret.address == -1) throw JSError('moduleIsBytecode Not found');
+      final retValue = ret.value;
+      malloc.free(ret);
+      return retValue;
+    },
+    moduleBytecode: (moduleName) {
+      final ptr = calloc<Pointer<Uint8>>();
+      final lenPtr = calloc<Pointer<Int>>();
+      ptr.value = Pointer.fromAddress(ptr.address);
+      lenPtr.value = Pointer.fromAddress(lenPtr.address);
+      sendPort.send({
+        #type: #moduleBytecode,
+        #moduleName: moduleName,
+        #ptr: ptr.address,
+        #lenPtr: lenPtr.address,
+      });
+      while (ptr.value.address == ptr.address) sleep(Duration(microseconds: 1));
+      final ret = ptr.value;
+      final lenRet = lenPtr.value;
+      malloc.free(ptr);
+      malloc.free(lenPtr);
+      if (ret.address == -1) throw JSError('moduleBytecode Not found');
+      int length = lenRet.value;
+      final retUint8List = ret.asTypedList(length);
+      malloc.free(ret);
+      malloc.free(lenRet);
+      return retUint8List;
+    },
     moduleNormalize: (moduleBaseName, moduleName) {
       final ptr = calloc<Pointer<Utf8>>();
       ptr.value = Pointer.fromAddress(ptr.address);
@@ -189,6 +228,8 @@ void _runJsIsolate(Map spawnMessage) async {
   await qjs.dispatch();
 }
 
+typedef _JsAsyncModuleIsBytecode = Future<int> Function(String moduleName);
+typedef _JsAsyncModuleBytecode = Future<Uint8List> Function(String moduleName);
 typedef _JsAsyncModuleNormalize = Future<String> Function(String moduleBaseName, String moduleName);
 typedef _JsAsyncModuleHandler = Future<String> Function(String name);
 
@@ -204,6 +245,12 @@ class IsolateQjs {
   /// Max memory for quickjs.
   final int? memoryLimit;
 
+  /// module is bytecode
+  final _JsAsyncModuleIsBytecode? moduleIsBytecode;
+
+  /// module is bytecode
+  final _JsAsyncModuleBytecode? moduleBytecode;
+
   /// module filename normalizer
   final _JsAsyncModuleNormalize? moduleNormalize;
 
@@ -218,6 +265,8 @@ class IsolateQjs {
   /// Pass handlers to implement js-dart interaction and resolving modules. The `methodHandler` is
   /// used in isolate, so **the handler function must be a top-level function or a static method**.
   IsolateQjs({
+    this.moduleIsBytecode,
+    this.moduleBytecode,
     this.moduleNormalize,
     this.moduleHandler,
     this.stackSize,
@@ -256,6 +305,34 @@ class IsolateQjs {
             }
           } catch (e) {
             print('host Promise Rejection Handler error: $e');
+          }
+          break;
+        case #moduleIsBytecode:
+          final ptr = Pointer<Pointer>.fromAddress(msg[#ptr]);
+          try {
+            int isBytecode = await moduleIsBytecode!(msg[#moduleName]);
+            final intPtr = malloc<Int>();
+            intPtr.value = isBytecode;
+            ptr.value = intPtr;
+          } catch (e) {
+            ptr.value = Pointer.fromAddress(-1);
+          }
+          break;
+        case #moduleBytecode:
+          final ptr = Pointer<Pointer>.fromAddress(msg[#ptr]);
+          final lenPtr = Pointer<Pointer>.fromAddress(msg[#lenPtr]);
+          try {
+            Uint8List bytecode = await moduleBytecode!(msg[#moduleName]);
+            int len = bytecode.length;
+            final uint8Ptr = malloc<Uint8>(len);
+            uint8Ptr.asTypedList(len).setAll(0, bytecode);
+            final intPtr = malloc<Int>();
+            intPtr.value = len;
+            ptr.value = uint8Ptr;
+            lenPtr.value = intPtr;
+          } catch (e) {
+            ptr.value = Pointer.fromAddress(-1);
+            lenPtr.value = Pointer.fromAddress(-1);
           }
           break;
         case #moduleNormalize:

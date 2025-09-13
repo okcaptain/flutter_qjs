@@ -14,6 +14,8 @@ extern "C"
     JSChannelType_PROMISE_TRACK = 2,
     JSChannelType_FREE_OBJECT = 3,
     JSChannelType_MODULE_NORMALIZE = 4,
+    JSChannelType_MODULE_IS_BYTECODE = 5,
+    JSChannelType_MODULE_BYTECODE = 6,
   };
 
   typedef void *JSChannel(JSContext *ctx, size_t type, void *argv);

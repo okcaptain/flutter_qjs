@@ -77,6 +77,8 @@ class JSChannelType {
   static const PROMISE_TRACK = 2;
   static const FREE_OBJECT = 3;
   static const MODULE_NORMALIZE = 4;
+  static const MODULE_IS_BYTECODE = 5;
+  static const MODULE_BYTECODE = 6;
 }
 
 class JSProp {

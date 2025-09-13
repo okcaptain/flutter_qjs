@@ -70,6 +70,23 @@ extern "C"
       JSContext *ctx,
       const char *module_name, void *opaque)
   {
+    JSValue isBytecode = *(JSValue *)((RuntimeOpaque *)opaque)->channel(ctx, JSChannelType_MODULE_IS_BYTECODE, (void *)module_name);
+    int is_bytecode = JS_ToBool(ctx, isBytecode);
+    if (is_bytecode) {
+        JSValue bytecodeJsValue = *(JSValue *)((RuntimeOpaque *)opaque)->channel(ctx, JSChannelType_MODULE_BYTECODE, (void *)module_name);
+        size_t length = 0;
+        uint8_t *bytecode = JS_GetArrayBuffer(ctx, &length, bytecodeJsValue);
+        JSValue obj = JS_ReadObject(ctx, bytecode, length, JS_READ_OBJ_BYTECODE | JS_READ_OBJ_REFERENCE);
+        if (JS_IsException(obj)) {
+            return NULL;//throwJSException
+        }
+        if (JS_ResolveModule(ctx, obj)) {
+            return NULL; //Failed to resolve JS module
+        }
+        JSModuleDef *m = (JSModuleDef *)JS_VALUE_GET_PTR(obj);
+        JS_FreeValue(ctx, obj);
+        return m;
+    }
     const char *str = (char *)((RuntimeOpaque *)opaque)->channel(ctx, JSChannelType_MODULE, (void *)module_name);
     if (str == 0)
       return NULL;
