@@ -239,8 +239,10 @@ Uint8List compileJs(
   intPtrLen.value = 0;
   final rt = _compileJs(ctx, sourceCode.toNativeUtf8(), fileName.toNativeUtf8(), isModule ? 1 : 0, intPtrLen);
   Uint8List bytes = Uint8List.fromList(rt.asTypedList(intPtrLen.value));
-  malloc.free(rt);
-  malloc.free(intPtrLen);
+  Future.microtask(() {
+    malloc.free(rt);
+    malloc.free(intPtrLen);
+  });
   return bytes;
 }
 
@@ -495,7 +497,9 @@ Pointer<JSValue> jsNewString(
 ) {
   final utf8str = str.toNativeUtf8();
   final jsStr = _jsNewString(ctx, utf8str);
-  malloc.free(utf8str);
+  Future.microtask(() {
+    malloc.free(utf8str);
+  });
   return jsStr;
 }
 
@@ -706,7 +710,9 @@ int jsNewClass(
     ctx,
     utf8name,
   );
-  malloc.free(utf8name);
+  Future.microtask(() {
+    malloc.free(utf8name);
+  });
   return val;
 }
 
