@@ -152,7 +152,6 @@ void _runJsIsolate(Map spawnMessage) async {
       if (ret.address == -1) throw JSError('moduleBytecode Not found');
       int length = lenRet.value;
       final retUint8List = ret.asTypedList(length);
-      malloc.free(ret);
       malloc.free(lenRet);
       return retUint8List;
     },
