@@ -4,7 +4,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../cxx/quickjs.cmake")
 set(PROJECT_NAME "flutter_qjs")
 project(${PROJECT_NAME} LANGUAGES CXX)
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-set(CMAKE_CXX_STANDARD 20)
 set(PLUGIN_NAME "${PROJECT_NAME}_plugin")
 
 add_library(${PLUGIN_NAME} SHARED
